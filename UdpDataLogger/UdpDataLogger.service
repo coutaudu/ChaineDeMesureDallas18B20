@@ -1,0 +1,18 @@
+# https://www.shubhamdipt.com/blog/how-to-create-a-systemd-service-in-linux/
+# https://doc.ubuntu-fr.org/creer_un_service_avec_systemd
+
+[Unit]
+Description=<UdpDataLogger>
+After=network.target
+StartLimitIntervalSec=10
+
+[Service]
+Type=simple
+Restart=on-failure
+RestartSec=0
+User=coutaudu
+#WorkingDirectory=</home/rpi/CommandLabviewRpiArduino/Raspberry>
+ExecStart=/bin/UdpDataLogger
+
+[Install]
+WantedBy=multi-user.target
