@@ -16,12 +16,14 @@
 #include <time.h>
 
 
-#define BUFLEN 255	//Max length of buffer
-#define PORT 30000	//The port on which to listen for incoming data
+#define BUFLEN 512	//Max length of buffer
 #define MAXLINESIZE 4096
 
-char FILEDEST[] = "../data/data.csv";
+unsigned int PORT = 3000;	//The port on which to listen for incoming data
+char FILEDEST[MAXLINESIZE] = "../data/data.csv";
 
-int getConfigurationFromFile(char* configurationFile, char* targetVariable, char* returnValue);
+int getConfigurationValueFromFile(char* configurationFile, char* targetVariable, char* returnValue);
+
+int  getConfigurationFromFile(char* configurationFile);
 
 void die(char *s);
