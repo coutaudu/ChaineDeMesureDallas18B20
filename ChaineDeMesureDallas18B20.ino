@@ -11,8 +11,9 @@ DeviceAddress mySensorsAddresses[2];
 
 WiFiUDP Udp;
 const uint16_t portSrc = 1917;
-const uint16_t portDest = 7191;
-const char * hostDest = "192.168.1.201";
+const uint16_t portDest = 32771;
+//const char * hostDest = "coutaudu.freeboxos.fr";
+const char * hostDest = "88.174.39.26";
 char packet[255];
 
 
@@ -22,7 +23,8 @@ void setup() {
   delay(5000);
   Serial.println();
   Serial.println();
-  initWifiConnexion("Abricot12","Zt8d#62x@TaX^ef623@K");
+  //initWifiConnexion("Abricot12","Zt8d#62x@TaX^ef623@K");
+  initWifiConnexion("APUC","ze9tikwms3z8t72");
   initUdpStream(portSrc);
   initDallas18B20Sensor(&my18B20Sensors, mySensorsAddresses, 12);
 }
@@ -48,7 +50,8 @@ void sendDataUdp (char* buffer){
 void getDataFromSensor(DallasTemperature* sensors, DeviceAddress* sensorsAddresses, unsigned int index, char* buffer) {
   float temperature;
   temperature = sensors->getTempC(sensorsAddresses[index]);
-  sprintf(packet, "@MAC[%s], @OW[%08X%08X], T[%3.5f], R[%2d],",
+  //sprintf(packet, "@MAC[%s], @OW[%08X%08X], T[%3.5f], R[%2d],",
+  sprintf(packet, "@MAC, %s, @OW, %08X%08X, T, %3.5f, R, %2d,",
   WiFi.macAddress().c_str(),
   *((long*) sensorsAddresses[index]),
   *(((long*)sensorsAddresses[index])+1),
@@ -81,7 +84,7 @@ int initDallas18B20Sensor(DallasTemperature* sensors, DeviceAddress* sensorsAddr
   }
   sensors->setResolution(sensorsAddresses[0], 12);
   sensors->setResolution(sensorsAddresses[1], 9);
-
+  return 0;
 }
 
 void printAddress(DeviceAddress deviceAddress) {
@@ -92,7 +95,9 @@ void printAddress(DeviceAddress deviceAddress) {
 }
 
 int initUdpStream(uint16_t port) {
+  Serial.println("initUdpStream");
   Udp.begin(portSrc);
+  return 0;
 }
 
 int initSerialLine(){
@@ -110,6 +115,10 @@ int initWifiConnexion(char* SSID, char* PASSWORD){
   }
   Serial.println();
 
-  Serial.print("Connecté, @IP: ");
-  Serial.println(WiFi.localIP());
+  Serial.print("Connecté, @IP: [");
+  Serial.print(WiFi.localIP());
+  Serial.println("]");
+
+  return 0;
+  
 }
