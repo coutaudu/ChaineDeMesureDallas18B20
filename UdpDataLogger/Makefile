@@ -31,20 +31,19 @@ all: $(PROGS)
 
 install_service: UdpDataLogger.service
 	sudo cp UdpDataLogger.service /etc/systemd/system/UdpDataLogger.service
-	sudo cp ./UdpDataLogger /bin/UdpDataLogger
 
 run_service: install_service
-	systemctl start UdpDataLogger
-	systemctl daemon-reload
+	sudo systemctl start UdpDataLogger
+	sudo systemctl daemon-reload
 
 auto_run_service:
-	systemctl enable UdpDataLogger
+	sudo systemctl enable UdpDataLogger
 
 stop_service:
-	systemctl stop UdpDataLogger
+	sudo systemctl stop UdpDataLogger
 
 disable_service:
-	systemctl disable UdpDataLogger
+	sudo systemctl disable UdpDataLogger
 
 
 clean:

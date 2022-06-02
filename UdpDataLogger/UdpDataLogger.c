@@ -1,78 +1,71 @@
 #include "UdpDataLogger.h"
 
 
+int main(void){
+  struct sockaddr_in si_me, si_other;
+  
+  int s, recv_len;
+  unsigned slen = sizeof(si_other) ;
 
-int main(void)
-{
-	struct sockaddr_in si_me, si_other;
+  char bufRcvUDP[BUFLEN];
+  char bufDate[BUFLEN];
+
+  getConfigurationFromFile("/home/coutaudu/ChaineDeMesureDallas18B20/UdpDataLogger/UdpDataLogger.conf");
+
+  //create a UDP socket
+  if ((s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+    die("socket");
+  }
 	
-	int s, recv_len;
-	unsigned slen = sizeof(si_other) ;
+  // zero out the structure
+  memset((char *) &si_me, 0, sizeof(si_me));	
+  memset(&bufRcvUDP, 0, BUFLEN);
 
-	char bufRcvUDP[BUFLEN];
-	char bufDate[BUFLEN];
-	char bufferConfiguration[MAXLINESIZE];
+  si_me.sin_family = AF_INET;
+  si_me.sin_port = htons(PORT);
+  si_me.sin_addr.s_addr = htonl(INADDR_ANY);
 	
-	getConfigurationFromFile("./UdpDataLogger.conf", "PORT", bufferConfiguration);
-	printf("PORT[%s]\n", bufferConfiguration);
-	
-	//create a UDP socket
-	if ((s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
-	{
-		die("socket");
-	}
-	
-	// zero out the structure
-	memset((char *) &si_me, 0, sizeof(si_me));	
-	memset(&bufRcvUDP, 0, BUFLEN);
-
-	si_me.sin_family = AF_INET;
-	si_me.sin_port = htons(PORT);
-	si_me.sin_addr.s_addr = htonl(INADDR_ANY);
-	
-	//bind socket to port
-	if( bind(s , (struct sockaddr*)&si_me, sizeof(si_me) ) == -1)
-	{
-		die("bind");
-	}
+  //bind socket to port
+  if( bind(s , (struct sockaddr*)&si_me, sizeof(si_me) ) == -1)
+    {
+      die("bind");
+    }
 
 
-	FILE* temperatureLog = fopen(FILEDEST, "a");
+  FILE* temperatureLog = fopen(FILEDEST, "a");
 
-	time_t t;
+  time_t t;
 
-	//keep listening for data
-	while(1)
-	{
+  //keep listening for data
+  while(1) {
 		
-		//try to receive some data, this is a blocking call
-		if ((recv_len = recvfrom(s, bufRcvUDP, BUFLEN, 0, (struct sockaddr *) &si_other, &slen)) == -1)
-		{
-			die("recvfrom()");
-		}
+    //try to receive some data, this is a blocking call
+    if ((recv_len = recvfrom(s, bufRcvUDP, BUFLEN, 0, (struct sockaddr *) &si_other, &slen)) == -1) {
+      die("recvfrom()");
+    }
 		
-		//print details of the client/peer and the data received
-		//		printf("Received packet from %s:%d\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port));
-		t = time(NULL);
-		strftime(bufDate, 1000, "%Y-%m-%dT%H:%M:%S", localtime(&t));
-		fprintf(temperatureLog, "%s, %s\n",bufDate,bufRcvUDP);
-		fflush(temperatureLog);
+    //print details of the client/peer and the data received
+    //		printf("Received packet from %s:%d\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port));
+    t = time(NULL);
+    strftime(bufDate, 1000, "%Y-%m-%dT%H:%M:%S", localtime(&t));
+    fprintf(temperatureLog, "%s, %s\n",bufDate,bufRcvUDP);
+    fflush(temperatureLog);
 		
-	}
+  }
 
-	close(s);
-	return 0;
+  close(s);
+  return 0;
 }
 
 
-int getConfigurationFromFile(char* configurationFile, char* targetVariable, char* returnValue){
+int getConfigurationValueFromFile(char* configurationFile, char* targetVariable, char* returnValue){
   FILE *in_file = fopen(configurationFile, "r");
   char *currentLine = malloc(MAXLINESIZE);
   int targetVariableStringLength = strlen(targetVariable);
 
   while (fscanf(in_file, "%[^\n] ", currentLine) != EOF) {
     if (strncmp(targetVariable, currentLine, targetVariableStringLength)==0
-	    && currentLine[targetVariableStringLength]=='='
+	&& currentLine[targetVariableStringLength]=='='
 	){
       currentLine = currentLine + targetVariableStringLength + 1;
       strcpy(returnValue, currentLine);
@@ -84,8 +77,22 @@ int getConfigurationFromFile(char* configurationFile, char* targetVariable, char
   return -1;
 }
 
+int  getConfigurationFromFile(char* configurationFile){
+  char value[MAXLINESIZE];
+ 
+  getConfigurationValueFromFile(configurationFile, "PORT", value);
+  PORT = atoi(value);
+  printf("PORT[%s]\n", value);
+  
+  getConfigurationValueFromFile(configurationFile, "FILEDEST", value);
+  strcpy(FILEDEST,value);
+  printf("FILEDEST[%s]\n", value);
+
+  return 0;
+}
+
 void die(char *s)
 {
-	perror(s);
-	exit(1);
+  perror(s);
+  exit(1);
 }

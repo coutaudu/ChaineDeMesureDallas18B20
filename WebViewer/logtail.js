@@ -23,7 +23,7 @@ function readTextFile(file){
 }
 
 var nbPoints = 100;
-var dataPoints = [];
+var dataPointsA = [];
 
 
 function changeNbPoints(val){
@@ -36,7 +36,7 @@ function changeNbPoints(val){
     // }else if(nbPoints==1000){
     // 	nbPoints=10;
     // }
-    dataPoints.length = 0;
+    dataPointsA.length = 0;
     $("#DEBUG").text(nbPoints);    
 
 }
@@ -48,7 +48,7 @@ function changeNbPoints(val){
     var pausetoggle = "#pause";
     var scrollelems = ["html", "body"];
 
-    var url = "./temperature.log";
+    var url = "./data.csv";
     var fix_rn = true;
     var load = 30 * 1024; /* 30KB */
     var poll = 1000; /* 1s */
@@ -71,21 +71,21 @@ function changeNbPoints(val){
                 if (csvLines[i].length > 0) {
                     points = csvLines[i].split(",");
 		    var curTS = new Date(points[0]);
-		    if(dataPoints.length==0 || dataPoints[dataPoints.length-1].x<curTS) {
-			dataPoints.push({ 
+		    if(dataPointsA.length==0 || dataPointsA[dataPointsA.length-1].x<curTS) {
+			dataPointsA.push({ 
                             x: curTS, 
-                            y: parseFloat(points[6]) 		
+                            y: parseFloat(points[6])
 			});
-			while (dataPoints.length >  nbPoints ) { dataPoints.shift(); }
+			while (dataPointsA.length >  nbPoints ) { dataPointsA.shift(); }
 		    }
                 }
-            return dataPoints;
+            return dataPointsA;
         }
 
 
 	getDataPointsFromCSV(url);
 	chart = new CanvasJS.Chart("chartContainer",{
-      	    title :{ text: "Campanule... Is it hot or is it not hot ? Let's find out !"},
+      	    title :{ text: "Is it hot or is it not hot ? Let's find out !"},
       	    axisX: { valueFormatString: "YYYY-MM-DD'T'HH:mm:ss" ,
 		     labelAngle: -50  },
       	    axisY: { title: "C"+String.fromCharCode(176),
@@ -95,8 +95,16 @@ function changeNbPoints(val){
 		type: "scatter",
 		color: "red",
 		xValueFormatString: "HH:mm:ss",
-		dataPoints : dataPoints
-	    }]
+		dataPoints : dataPointsA
+	    }
+		//    ,
+		//    {
+		// type: "line",
+		// color: "green",
+		// xValueFormatString: "HH:mm:ss",
+		// dataPoints : dataPointsA
+		//    }
+		  ]
 	});				   
 	
 	chart.render();
