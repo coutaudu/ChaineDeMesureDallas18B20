@@ -96,13 +96,15 @@ function changeNbPoints(val){
 		color: "red",
 		xValueFormatString: "HH:mm:ss",
 		dataPoints : dataPointsA
-	    },
-		   {
-		type: "line",
-		color: "green",
-		xValueFormatString: "HH:mm:ss",
-		dataPoints : dataPointsA
-	    }]
+	    }
+		//    ,
+		//    {
+		// type: "line",
+		// color: "green",
+		// xValueFormatString: "HH:mm:ss",
+		// dataPoints : dataPointsA
+		//    }
+		  ]
 	});				   
 	
 	chart.render();
