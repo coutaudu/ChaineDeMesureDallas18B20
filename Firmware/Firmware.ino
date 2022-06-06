@@ -3,7 +3,7 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 
-#define DELAI_ACQUISITION 10000
+#define DELAI_ACQUISITION 30000
 #define ONEWIRE_PIN 2  // DS18B20 pin
 OneWire oneWire(ONEWIRE_PIN);
 DallasTemperature my18B20Sensors(&oneWire);
@@ -26,7 +26,7 @@ void setup() {
   initWifiConnexion("Abricot12","Zt8d#62x@TaX^ef623@K");
   //initWifiConnexion("APUC","ze9tikwms3z8t72");
   initUdpStream(portSrc);
-  initDallas18B20Sensor(&my18B20Sensors, mySensorsAddresses, 12);
+  initDallas18B20Sensor(&my18B20Sensors, mySensorsAddresses);
 }
 
 void loop() {
@@ -69,7 +69,7 @@ void readFromSensors(DallasTemperature* sensors){
   return;  
 }
 
-int initDallas18B20Sensor(DallasTemperature* sensors, DeviceAddress* sensorsAddresses, int temperaturePrecision) {
+int initDallas18B20Sensor(DallasTemperature* sensors, DeviceAddress* sensorsAddresses) {
   int nbCapteurs;
   sensors->begin();
   nbCapteurs = sensors->getDeviceCount();
