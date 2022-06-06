@@ -64,7 +64,9 @@ void getDataFromSensor(DallasTemperature* sensors, DeviceAddress* sensorsAddress
 
 void readFromSensors(DallasTemperature* sensors){
   sensors->requestTemperatures();
-//  while (!sensors->isConversionComplete()){Serial.println("Acquisition en cours.");}
+  while (!sensors->isConversionComplete()){
+    //Serial.println("Acquisition en cours.");
+  } 
   while (!sensors->isConversionComplete());
   return;  
 }
