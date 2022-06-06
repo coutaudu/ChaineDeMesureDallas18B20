@@ -23,7 +23,8 @@ function readTextFile(file){
 }
 
 var nbPoints = 100;
-var dataPointsA = [];
+var dataPoint12b = [];
+var dataPoint9b = [];
 
 
 function changeNbPoints(val){
@@ -36,7 +37,8 @@ function changeNbPoints(val){
     // }else if(nbPoints==1000){
     // 	nbPoints=10;
     // }
-    dataPointsA.length = 0;
+    dataPoint12b.length = 0;
+    dataPoint9b.length = 0;
     $("#DEBUG").text(nbPoints);    
 
 }
@@ -64,26 +66,27 @@ function changeNbPoints(val){
 
     window.onload = function () {
 	var chart;
-        function getDataPointsFromCSV(file) {
+        function getDataPointsFromCSV(file, dataPoints, numColumn) {
 	    csv = readTextFile(file);
             csvLines = csv.split(/[\r?\n|\r|\n]+/).slice(-(nbPoints+1));         
             for (var i = 0; i < csvLines.length; i++)
                 if (csvLines[i].length > 0) {
                     points = csvLines[i].split(",");
 		    var curTS = new Date(points[0]);
-		    if(dataPointsA.length==0 || dataPointsA[dataPointsA.length-1].x<curTS) {
-			dataPointsA.push({ 
+		    if(dataPoints.length==0 || dataPoints[dataPoints.length-1].x<curTS) {
+			dataPoints.push({ 
                             x: curTS, 
-                            y: parseFloat(points[6])
+                            y: parseFloat(points[numColumn])
 			});
-			while (dataPointsA.length >  nbPoints ) { dataPointsA.shift(); }
+			while (dataPoints.length >  nbPoints ) { dataPoints.shift(); }
 		    }
                 }
-            return dataPointsA;
+            return dataPoints;
         }
 
 
-	getDataPointsFromCSV(url);
+	getDataPointsFromCSV(url,dataPoint12b, 6);
+	getDataPointsFromCSV(url,dataPoint9b, 14);
 	chart = new CanvasJS.Chart("chartContainer",{
       	    title :{ text: "Is it hot or is it not hot ? Let's find out !"},
       	    axisX: { valueFormatString: "YYYY-MM-DD'T'HH:mm:ss" ,
@@ -95,15 +98,13 @@ function changeNbPoints(val){
 		type: "scatter",
 		color: "red",
 		xValueFormatString: "HH:mm:ss",
-		dataPoints : dataPointsA
+		dataPoints : dataPoint12b
+	    }, {
+		type: "scatter",
+		color: "green",
+		xValueFormatString: "HH:mm:ss",
+		dataPoints : dataPoint9b
 	    }
-		//    ,
-		//    {
-		// type: "line",
-		// color: "green",
-		// xValueFormatString: "HH:mm:ss",
-		// dataPoints : dataPointsA
-		//    }
 		  ]
 	});				   
 	
@@ -112,7 +113,9 @@ function changeNbPoints(val){
 	
     /////////:
     function updateChart() {
-	getDataPointsFromCSV(url);
+	//getDataPointsFromCSV(url);
+	getDataPointsFromCSV(url,dataPoint12b, 6);
+	getDataPointsFromCSV(url,dataPoint9b, 14);
 	chart.render();
 	setTimeout(function(){updateChart()}, poll);
     }
