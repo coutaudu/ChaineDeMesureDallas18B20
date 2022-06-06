@@ -1,0 +1,121 @@
+#+TITLE:Rapport chaine de mesure avec capteur
+#+AUTHOR:Ulysse COUTAUD p2112506
+# -*- org-export-allow-bind-keywords: t -*-
+#+latex_header: \usepackage{xcolor}
+#+LATEX_HEADER: \usepackage[margin=0.9in]{geometry}
+
+* Vue d'ensembre de la chaine de mesure
+[[./drawing.pdf]]
+
+* Le capteur Dallas 18B20
++ J'ai choisi d'utiliser des [[https://www.az-delivery.de/fr/products/ds18b20-temperatursensor-modul][capteurs 18B20 de /Dallas Semiconductor/]].
++ Le capteur Dallas 18B20 incorpore les fonctionnalités de transducteur, conditionneur et de traitement de la mesure.
+
+** Caractérisques du capteur 18B20:
+  - Plage de mesure: -55°C/+125°C.
+  - Précision: +/- 0.5°C sur la plage -10°C/+85°C.
+  - Résolution: configurable jusqu'à 0.0625°C. 
+
++ La figure ci-dessous donne l'erreur typique du capteru décrite par le fabricant:
+[[./path984.png]]
+
++ Le capteur 18B20 utilise une mémoire interne et permet une lecture digitale de la temperature mesurée, sans nécessité ni d'amplifier le ignal, ni de convertir la mesure.
++ La lecture de la mesure se fait via un protocole de type bus (1-Wire).
+
+** Fonctionnalités supplémentaires:
++ Le capteur 18B20 offre également des fonctionnalités supplémentaires telles que :
+  + Un numéro d'identification unique, qui donne la possibiliter d'utiliser plusieurs capteurs sur une seule pin GPIO du micro-processeur pilotant la mesure.
+  + Un mode de fonctionnement /parasite/ pour alimenter le cpatuer via la pin de données.
+  + Un mode alarme pour détecter la sortie des bornes de températures programmées.
+  + Une fonction de conversion temperature-digital de résolution paramétrable à 9, 10, 11 ou 12 bits. NB: le temps 
+
+
+    
+
+* Mise en oeuvre de la chainde mesure avec capteurs 18B20
++ La photo ci-dessous présente le banc de mesure.
+[[./IMG.jpg]]
+
+** Acquisition de la mesure via un micro-controleur ESP8266-01S
++ Deux capteurs 18B20 sont connectés sur le port GPIO2 du microcontrolleur ESP8266.
++ Le mode alimentation /parasite/ n'est pas utilisé. C'est à dire que les bornes + et - du capteur sont alimentés à 3.3v. 
++ L'utilisation de 2 capteurs me permettra donc de comparer les résolutions à 9bits et 12 bits.
++ Les capteurs sont initialisés par la fonction si dessous:
+#+BIND: org-export-filter-code-functions (tmp-latex-code-filter)
+#+begin_src C
+int initDallas18B20Sensor(DallasTemperature* sensors, DeviceAddress* sensorsAddresses) {
+  int nbCapteurs;
+  sensors->begin();
+  nbCapteurs = sensors->getDeviceCount();
+
+  Serial.print("Capteurs branchés: ");
+  Serial.println(nbCapteurs, DEC);
+  for (int i=0; i<nbCapteurs; i++){
+    if(!sensors->getAddress(sensorsAddresses[i], i)) {
+      Serial.println("Echec a la detection du capteur.");
+      return -1;
+    }
+    Serial.print("Adresse OneWire: [");
+    printAddress(sensorsAddresses[i]);
+    Serial.println("]");
+  }
+  sensors->setResolution(sensorsAddresses[0], 12);
+  sensors->setResolution(sensorsAddresses[1], 9);
+  return 0;
+}
+#+end_src
+
++ L'acquisition de la mesure est ensuite effectuées toutes les 30s par la fonction ci-dessous:
+#+BIND: org-export-filter-code-functions (tmp-latex-code-filter)
+#+begin_src C
+void readFromSensors(DallasTemperature* sensors){
+  sensors->requestTemperatures();
+  while (!sensors->isConversionComplete()){
+    //Serial.println("Acquisition en cours.");
+  } 
+  while (!sensors->isConversionComplete());
+  return;  
+}
+#+end_src
+
+** Transmission en UDP-IP
++ Le micro-controlleur ESP8266 se connecte au réseau WIFI pré-provisionné dans le code source.
++ Les mesures des 2 capteurs sont concaténées et transmise en Wifi par une communication UDP-IP vers un serveur de données en écoute.
+#+BIND: org-export-filter-code-functions (tmp-latex-code-filter)
+#+begin_src C
+  getDataFromSensor(&my18B20Sensors, mySensorsAddresses, 0, buffer);
+  Serial.println(buffer);
+  buffer += strlen(buffer);
+  getDataFromSensor(&my18B20Sensors, mySensorsAddresses, 1, buffer);
+  Serial.println(buffer);
+  buffer = packet;
+  sendDataUdp(buffer);
+#+end_src
+
+
+** Exploitation 
+*** Stockage des données:  UDP Data Logger
++ Le serveur de données est développé en C et pour une base Linux.
++ Il consiste en un serveur UDP qui effectue:
+  - une boucle d'écoute sur un port,
+  - ajoute un timestamp au paquet reçu,
+  - enregistre les données de manière cumulative dans un fichier au format CSV. 
+
+*** Visualisation des données: page web sur serveur Apache
++ L'exploitation des données consiste en une visualisation sur une page web.
++ Un serveur Apache avec un module Javascript est installé sur la même machine que le serveur de données.
++ Le serveur web est paramétré pour répondre sur le port 32770. 
++ Une page Web utilisant un script de lecture dynamique du fichier de mesures permet une visualisation en direct de la mesure, sans besoin de rafraichir la page et en réduisant la bande passante.
++ Une fonction de tracé graphique de [[https://canvasjs.com/][Canvas JS]] permet la visualisation graphique des mesures stockées dans le fichier CSV.
++ Les boutons en bas à droite du graphe permettent de paramétrer le nombre de données à afficher et ainsi observer des mesures plus anciennes.
++ La capture d'écran ci-dessous montre la page web de visualisation:
+[[./image834.png]]
+
+* Code source
+Le code source est accessible sur github
+https://github.com/coutaudu/ChaineDeMesureDallas18B20
+
+* Système en production
++ Une instance de la chaine de mesure est accessible sur http://coutaudu.freeboxos.fr:32770/
++ Les mesures en résolution 12 bits offrent une meilleure granularité que les mesures en résolution 9bits. 
++ Les mesures des 2 capteurs ne sont pas égales mais la différence est inférieure à 1°C ce qui reste cohérent avec la précision annoncée par le fabricant.
